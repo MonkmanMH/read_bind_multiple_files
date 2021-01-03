@@ -2,9 +2,10 @@
 # https://twitter.com/kc_analytics/status/1345434428059881480
 library(tidyverse)
 library(data.table)
+library(tictoc) # to check speed
 
 # 
-setwd("read_bind_multiple_files")
+setwd("data_csv")
 # EIKIFJB so is there a better way?!
 
 
@@ -14,14 +15,17 @@ df_files <-
   map_df(~fread(.))  # note tilde in front of `fread`
 
 # if all the files in the folder are CSV:
+tic()
 df_files <-
   list.files() %>%
   map_df(fread)
+toc()
 
 # slightly faster:
+tic()
 df_files <-
   rbindlist(lapply(list.files(), fread))
-
+toc()
 
 #### ----
 
@@ -42,11 +46,10 @@ df_files <-
   list.files(pattern = "*.csv") %>% 
   map_dfr(read_csv, .id = "source")
 
-tictoc::tic()
-tictoc::toc()
 
-# yes indeedly doodly!
-data_dir <- here::here("read_bind_multiple_files", "data_csv")
+#### ----
+
+# VARIATIONS ON A THEME
 
 # variant with Excel files
 tictoc::tic()
@@ -56,3 +59,16 @@ files <-
   map_dfr(read_excel, .id = "source")
 tictoc::toc()
 
+
+# another CSV variation with `here`, creating a nested tibble
+# https://twitter.com/TDTran333/status/1345567646184599552?s=20
+data_dir <- here::here("data_csv")
+files <- list.files(path = data_dir, pattern = "\\.csv$")
+
+df_datafiles <- tibble(filename = files) %>% 
+  mutate(file_contents = map(filename, ~read_csv(file.path(data_dir, .))))
+
+# examine your handywork
+df_datafiles
+unnest(df_datafiles) # now throws warning
+unnest(df_datafiles, cols = c(file_contents))
