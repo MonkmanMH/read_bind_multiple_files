@@ -70,5 +70,6 @@ df_datafiles <- tibble(filename = files) %>%
 
 # examine your handywork
 df_datafiles
+# to unnest the tibble
 unnest(df_datafiles) # now throws warning
 unnest(df_datafiles, cols = c(file_contents))
